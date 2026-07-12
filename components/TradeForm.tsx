@@ -18,6 +18,11 @@ export default function TradeForm({
   const supabase = createClient();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [screenshotFile, setScreenshotFile] = useState<File | null>(null);
+  const [screenshotPreview, setScreenshotPreview] = useState<string | null>(
+    existingTrade?.screenshot_url ?? null
+  );
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   const [form, setForm] = useState({
     symbol: existingTrade?.symbol ?? "",
@@ -39,6 +44,47 @@ export default function TradeForm({
 
   function update(field: string, value: any) {
     setForm((prev) => ({ ...prev, [field]: value }));
+  }
+
+  function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      setError("L'image doit faire moins de 5 Mo.");
+      return;
+    }
+
+    setScreenshotFile(file);
+    setScreenshotPreview(URL.createObjectURL(file));
+    setError(null);
+  }
+
+  function removeScreenshot() {
+    setScreenshotFile(null);
+    setScreenshotPreview(null);
+  }
+
+  async function uploadScreenshot(userId: string): Promise<string | null> {
+    if (!screenshotFile) return existingTrade?.screenshot_url ?? null;
+
+    setUploadingImage(true);
+    const fileExt = screenshotFile.name.split(".").pop();
+    const filePath = `${userId}/${Date.now()}.${fileExt}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from("trade-screenshots")
+      .upload(filePath, screenshotFile, { upsert: false });
+
+    setUploadingImage(false);
+
+    if (uploadError) {
+      setError("Échec de l'upload de l'image : " + uploadError.message);
+      return null;
+    }
+
+    const { data } = supabase.storage.from("trade-screenshots").getPublicUrl(filePath);
+    return data.publicUrl;
   }
 
   function computeResult() {
@@ -70,8 +116,11 @@ export default function TradeForm({
 
     const { amount, pct } = computeResult();
 
+    const screenshotUrl = await uploadScreenshot(user.id);
+
     const payload = {
       user_id: user.id,
+      screenshot_url: screenshotUrl,
       symbol: form.symbol.toUpperCase(),
       direction: form.direction,
       entry_price: parseFloat(String(form.entry_price)),
@@ -297,6 +346,38 @@ export default function TradeForm({
       </label>
 
       <div>
+        <label className={labelClass}>Capture d'écran du graphique</label>
+
+        {screenshotPreview ? (
+          <div className="relative">
+            <img
+              src={screenshotPreview}
+              alt="Aperçu du trade"
+              className="w-full rounded-lg border border-border object-cover"
+            />
+            <button
+              type="button"
+              onClick={removeScreenshot}
+              className="absolute right-2 top-2 rounded-full bg-background/90 px-2 py-1 text-xs text-loss"
+            >
+              Retirer
+            </button>
+          </div>
+        ) : (
+          <label className="flex cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-border bg-surface py-8 text-xs text-textSecondary hover:bg-surfaceHover">
+            <span>Touchez pour ajouter une image</span>
+            <span className="text-textSecondary/60">JPG, PNG — 5 Mo max</span>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleFileSelect}
+              className="hidden"
+            />
+          </label>
+        )}
+      </div>
+
+      <div>
         <label className={labelClass}>Notes</label>
         <textarea
           value={form.notes}
@@ -314,7 +395,13 @@ export default function TradeForm({
         disabled={loading}
         className="rounded-lg bg-primary py-3 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-50"
       >
-        {loading ? "Enregistrement..." : existingTrade ? "Mettre à jour" : "Enregistrer le trade"}
+        {uploadingImage
+          ? "Envoi de l'image..."
+          : loading
+          ? "Enregistrement..."
+          : existingTrade
+          ? "Mettre à jour"
+          : "Enregistrer le trade"}
       </button>
     </form>
   );
