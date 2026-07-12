@@ -8,7 +8,6 @@ import {
   getClosedTrades,
 } from "@/lib/stats";
 import StatCard from "@/components/StatCard";
-import AnnouncementBanner from "@/components/AnnouncementBanner";
 import WhatsAppCard from "@/components/WhatsAppCard";
 import Link from "next/link";
 import { TrendingUp, TrendingDown, Percent, Flame, Sun, Moon, ArrowRight } from "lucide-react";
@@ -61,8 +60,6 @@ export default async function DashboardPage() {
           })}
         </p>
       </div>
-
-      <AnnouncementBanner />
 
       {/* Alerte série de pertes */}
       {lossStreak >= 3 && (
