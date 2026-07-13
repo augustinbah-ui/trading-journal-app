@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Trading Journal — Votre coach de discipline",
+  title: "MyTradEdge — Votre coach de discipline",
   description: "Journal de trading, statistiques, gestion du risque et suivi comportemental.",
 };
 
