@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import {
@@ -13,7 +14,6 @@ import {
   Brain,
   Settings,
   LogOut,
-  TrendingUp,
 } from "lucide-react";
 
 const NAV_ITEMS = [
@@ -41,10 +41,10 @@ export default function Sidebar() {
   return (
     <aside className="hidden w-60 shrink-0 flex-col border-r border-border bg-surface md:flex">
       <div className="flex items-center gap-2 px-5 py-5">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
-          <TrendingUp className="h-4 w-4 text-primary" />
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-lg">
+          <Image src="/icon.png" alt="MyTradEdge" width={32} height={32} />
         </div>
-        <span className="font-semibold">TradeJournal</span>
+        <span className="font-semibold">MyTradEdge</span>
       </div>
 
       <nav className="flex-1 space-y-1 px-3">
