@@ -2,8 +2,8 @@ import { createClient } from "@/lib/supabase/server";
 import { Trade, Profile, DailyRitual } from "@/types/database";
 import {
   calcWinRate,
-  calcTotalPnL,
-  calcTodayPnL,
+  calcTotalR,
+  calcTodayR,
   calcCurrentLossStreak,
   getClosedTrades,
 } from "@/lib/stats";
@@ -38,8 +38,8 @@ export default async function DashboardPage() {
   const ritual = todayRitual as DailyRitual | null;
 
   const winRate = calcWinRate(t);
-  const totalPnL = calcTotalPnL(t);
-  const todayPnL = calcTodayPnL(t);
+  const totalR = calcTotalR(t);
+  const todayR = calcTodayR(t);
   const lossStreak = calcCurrentLossStreak(t);
   const openTrades = t.filter((x) => x.status === "open");
   const closedCount = getClosedTrades(t).length;
@@ -110,16 +110,16 @@ export default async function DashboardPage() {
       {/* Stats principales */}
       <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-4">
         <StatCard
-          label="P&L du jour"
-          value={`${todayPnL >= 0 ? "+" : ""}${todayPnL.toFixed(2)} ${p?.currency ?? "EUR"}`}
-          icon={todayPnL >= 0 ? TrendingUp : TrendingDown}
-          tone={todayPnL >= 0 ? "positive" : "negative"}
+          label="R du jour"
+          value={`${todayR >= 0 ? "+" : ""}${todayR.toFixed(2)}R`}
+          icon={todayR >= 0 ? TrendingUp : TrendingDown}
+          tone={todayR >= 0 ? "positive" : "negative"}
         />
         <StatCard
-          label="P&L total"
-          value={`${totalPnL >= 0 ? "+" : ""}${totalPnL.toFixed(2)} ${p?.currency ?? "EUR"}`}
-          icon={totalPnL >= 0 ? TrendingUp : TrendingDown}
-          tone={totalPnL >= 0 ? "positive" : "negative"}
+          label="R total"
+          value={`${totalR >= 0 ? "+" : ""}${totalR.toFixed(2)}R`}
+          icon={totalR >= 0 ? TrendingUp : TrendingDown}
+          tone={totalR >= 0 ? "positive" : "negative"}
         />
         <StatCard label="Win rate" value={`${winRate.toFixed(0)}%`} icon={Percent} />
         <StatCard label="Trades clôturés" value={`${closedCount}`} />
