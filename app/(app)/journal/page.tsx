@@ -1,22 +1,35 @@
 import { createClient } from "@/lib/supabase/server";
-import { Trade } from "@/types/database";
+import { Trade, TradingAccount } from "@/types/database";
 import Link from "next/link";
 import { Plus, TrendingUp, TrendingDown } from "lucide-react";
 import clsx from "clsx";
+import AccountSelector from "@/components/AccountSelector";
 
-export default async function JournalPage() {
+export default async function JournalPage({
+  searchParams,
+}: {
+  searchParams: { account?: string };
+}) {
   const supabase = createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const { data: trades } = await supabase
-    .from("trades")
-    .select("*")
-    .eq("user_id", user!.id)
-    .order("entry_time", { ascending: false });
+  const selectedAccount = searchParams.account ?? "";
 
-  const t = (trades as Trade[]) ?? [];
+  const [{ data: trades }, { data: accounts }] = await Promise.all([
+    supabase
+      .from("trades")
+      .select("*")
+      .eq("user_id", user!.id)
+      .order("entry_time", { ascending: false }),
+    supabase.from("trading_accounts").select("*").eq("user_id", user!.id),
+  ]);
+
+  const accountsList = (accounts as TradingAccount[]) ?? [];
+  const t = ((trades as Trade[]) ?? []).filter(
+    (trade) => !selectedAccount || trade.account_id === selectedAccount
+  );
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-6 md:px-8 md:py-8">
@@ -33,6 +46,8 @@ export default async function JournalPage() {
           Nouveau trade
         </Link>
       </div>
+
+      <AccountSelector accounts={accountsList} />
 
       {t.length === 0 ? (
         <div className="rounded-xl border border-dashed border-border p-10 text-center">
