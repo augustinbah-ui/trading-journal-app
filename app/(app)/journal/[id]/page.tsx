@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { Strategy, Trade, TradingAccount } from "@/types/database";
 import TradeForm from "@/components/TradeForm";
+import DeleteTradeButton from "@/components/DeleteTradeButton";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { notFound } from "next/navigation";
@@ -34,6 +35,10 @@ export default async function TradeDetailPage({ params }: { params: { id: string
         accounts={(accounts as TradingAccount[]) ?? []}
         existingTrade={trade as Trade}
       />
+
+      <div className="mt-6 border-t border-border pt-6">
+        <DeleteTradeButton tradeId={(trade as Trade).id} />
+      </div>
     </div>
   );
 }
