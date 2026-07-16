@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { Trade, Profile, DailyRitual } from "@/types/database";
+import { Trade, Profile, DailyRitual, TradingAccount } from "@/types/database";
 import {
   calcWinRate,
   calcTotalR,
@@ -9,33 +9,46 @@ import {
 } from "@/lib/stats";
 import StatCard from "@/components/StatCard";
 import WhatsAppCard from "@/components/WhatsAppCard";
+import AccountSelector from "@/components/AccountSelector";
 import Link from "next/link";
 import { TrendingUp, TrendingDown, Percent, Flame, Sun, Moon, ArrowRight } from "lucide-react";
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: { account?: string };
+}) {
   const supabase = createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const [{ data: profile }, { data: trades }, { data: todayRitual }] = await Promise.all([
-    supabase.from("profiles").select("*").eq("id", user!.id).single(),
-    supabase
-      .from("trades")
-      .select("*")
-      .eq("user_id", user!.id)
-      .order("entry_time", { ascending: false }),
-    supabase
-      .from("daily_rituals")
-      .select("*")
-      .eq("user_id", user!.id)
-      .eq("ritual_date", new Date().toISOString().slice(0, 10))
-      .maybeSingle(),
-  ]);
+  const selectedAccount = searchParams.account ?? "";
+
+  const [{ data: profile }, { data: allTrades }, { data: todayRitual }, { data: accounts }] =
+    await Promise.all([
+      supabase.from("profiles").select("*").eq("id", user!.id).single(),
+      supabase
+        .from("trades")
+        .select("*")
+        .eq("user_id", user!.id)
+        .order("entry_time", { ascending: false }),
+      supabase
+        .from("daily_rituals")
+        .select("*")
+        .eq("user_id", user!.id)
+        .eq("ritual_date", new Date().toISOString().slice(0, 10))
+        .maybeSingle(),
+      supabase.from("trading_accounts").select("*").eq("user_id", user!.id),
+    ]);
 
   const p = profile as Profile | null;
-  const t = (trades as Trade[]) ?? [];
   const ritual = todayRitual as DailyRitual | null;
+  const accountsList = (accounts as TradingAccount[]) ?? [];
+
+  const t = ((allTrades as Trade[]) ?? []).filter(
+    (trade) => !selectedAccount || trade.account_id === selectedAccount
+  );
 
   const winRate = calcWinRate(t);
   const totalR = calcTotalR(t);
@@ -60,6 +73,8 @@ export default async function DashboardPage() {
           })}
         </p>
       </div>
+
+      <AccountSelector accounts={accountsList} />
 
       {/* Alerte série de pertes */}
       {lossStreak >= 3 && (
