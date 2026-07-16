@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { Strategy } from "@/types/database";
+import { Strategy, TradingAccount } from "@/types/database";
 import TradeForm from "@/components/TradeForm";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
@@ -10,11 +10,14 @@ export default async function NewTradePage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const { data: strategies } = await supabase
-    .from("strategies")
-    .select("*")
-    .eq("user_id", user!.id)
-    .eq("is_active", true);
+  const [{ data: strategies }, { data: accounts }] = await Promise.all([
+    supabase
+      .from("strategies")
+      .select("*")
+      .eq("user_id", user!.id)
+      .eq("is_active", true),
+    supabase.from("trading_accounts").select("*").eq("user_id", user!.id),
+  ]);
 
   return (
     <div className="mx-auto max-w-xl px-4 py-6 md:px-8 md:py-8">
@@ -26,7 +29,10 @@ export default async function NewTradePage() {
         Retour au journal
       </Link>
       <h1 className="mb-6 text-xl font-semibold">Nouveau trade</h1>
-      <TradeForm strategies={(strategies as Strategy[]) ?? []} />
+      <TradeForm
+        strategies={(strategies as Strategy[]) ?? []}
+        accounts={(accounts as TradingAccount[]) ?? []}
+      />
     </div>
   );
 }
