@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Trade, Profile } from "@/types/database";
 import {
   calcWinRate,
-  calcTotalPnL,
+  calcTotalR,
   calcAverageRR,
   calcMaxDrawdown,
   buildEquityCurve,
@@ -29,7 +29,7 @@ export default async function StatsPage() {
   const closed = getClosedTrades(t);
 
   const winRate = calcWinRate(t);
-  const totalPnL = calcTotalPnL(t);
+  const totalR = calcTotalR(t);
   const avgRR = calcAverageRR(t);
   const maxDD = calcMaxDrawdown(t);
   const equityCurve = buildEquityCurve(t, p?.starting_capital ?? 0);
@@ -49,22 +49,22 @@ export default async function StatsPage() {
         <>
           <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-4">
             <StatCard
-              label="P&L total"
-              value={`${totalPnL >= 0 ? "+" : ""}${totalPnL.toFixed(2)} ${p?.currency ?? "EUR"}`}
-              icon={totalPnL >= 0 ? TrendingUp : TrendingDown}
-              tone={totalPnL >= 0 ? "positive" : "negative"}
+              label="R total"
+              value={`${totalR >= 0 ? "+" : ""}${totalR.toFixed(2)}R`}
+              icon={totalR >= 0 ? TrendingUp : TrendingDown}
+              tone={totalR >= 0 ? "positive" : "negative"}
             />
             <StatCard label="Win rate" value={`${winRate.toFixed(0)}%`} icon={Percent} />
-            <StatCard label="R:R moyen" value={avgRR.toFixed(2)} icon={Scale} />
+            <StatCard label="R:R visé (moyen)" value={avgRR.toFixed(2)} icon={Scale} />
             <StatCard
               label="Drawdown max"
-              value={`-${maxDD.toFixed(2)} ${p?.currency ?? "EUR"}`}
+              value={`-${maxDD.toFixed(2)}R`}
               tone="negative"
             />
           </div>
 
           <div className="mb-6 rounded-xl border border-border bg-surface p-4 md:p-6">
-            <h2 className="mb-4 text-sm font-medium">Courbe d'équité</h2>
+            <h2 className="mb-4 text-sm font-medium">Courbe de R cumulés</h2>
             <EquityChart data={equityCurve} />
           </div>
 
