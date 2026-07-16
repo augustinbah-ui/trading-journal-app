@@ -25,7 +25,7 @@ export default function PerformanceBySymbol({ trades }: { trades: Trade[] }) {
           </div>
           <span className={clsx("font-medium", data.pnl >= 0 ? "text-profit" : "text-loss")}>
             {data.pnl >= 0 ? "+" : ""}
-            {data.pnl.toFixed(2)}
+            {data.pnl.toFixed(2)}R
           </span>
         </div>
       ))}
