@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { Strategy, Trade } from "@/types/database";
+import { Strategy, Trade, TradingAccount } from "@/types/database";
 import TradeForm from "@/components/TradeForm";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
@@ -11,9 +11,10 @@ export default async function TradeDetailPage({ params }: { params: { id: string
     data: { user },
   } = await supabase.auth.getUser();
 
-  const [{ data: trade }, { data: strategies }] = await Promise.all([
+  const [{ data: trade }, { data: strategies }, { data: accounts }] = await Promise.all([
     supabase.from("trades").select("*").eq("id", params.id).eq("user_id", user!.id).single(),
     supabase.from("strategies").select("*").eq("user_id", user!.id).eq("is_active", true),
+    supabase.from("trading_accounts").select("*").eq("user_id", user!.id),
   ]);
 
   if (!trade) notFound();
@@ -30,6 +31,7 @@ export default async function TradeDetailPage({ params }: { params: { id: string
       <h1 className="mb-6 text-xl font-semibold">Modifier le trade — {(trade as Trade).symbol}</h1>
       <TradeForm
         strategies={(strategies as Strategy[]) ?? []}
+        accounts={(accounts as TradingAccount[]) ?? []}
         existingTrade={trade as Trade}
       />
     </div>
