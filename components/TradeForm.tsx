@@ -3,15 +3,17 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { Trade, Strategy } from "@/types/database";
+import { Trade, Strategy, TradingAccount } from "@/types/database";
 
 const EMOTIONS = ["Confiant", "Neutre", "Stressé", "Excité", "Anxieux", "Frustré"];
 
 export default function TradeForm({
   strategies,
+  accounts,
   existingTrade,
 }: {
   strategies: Strategy[];
+  accounts: TradingAccount[];
   existingTrade?: Trade;
 }) {
   const router = useRouter();
@@ -35,6 +37,7 @@ export default function TradeForm({
     entry_time: existingTrade?.entry_time?.slice(0, 16) ?? new Date().toISOString().slice(0, 16),
     exit_time: existingTrade?.exit_time?.slice(0, 16) ?? "",
     status: existingTrade?.status ?? "open",
+    account_id: existingTrade?.account_id ?? "",
     strategy_id: existingTrade?.strategy_id ?? "",
     notes: existingTrade?.notes ?? "",
     emotion_before: existingTrade?.emotion_before ?? "",
@@ -139,6 +142,7 @@ export default function TradeForm({
       entry_time: new Date(form.entry_time).toISOString(),
       exit_time: form.exit_time ? new Date(form.exit_time).toISOString() : null,
       status: form.status,
+      account_id: form.account_id || null,
       strategy_id: form.strategy_id || null,
       notes: form.notes || null,
       emotion_before: form.emotion_before || null,
@@ -290,6 +294,24 @@ export default function TradeForm({
           </div>
         )}
       </div>
+
+      {accounts.length > 0 && (
+        <div>
+          <label className={labelClass}>Compte de trading</label>
+          <select
+            value={form.account_id}
+            onChange={(e) => update("account_id", e.target.value)}
+            className={inputClass}
+          >
+            <option value="">— Aucun compte spécifique —</option>
+            {accounts.map((acc) => (
+              <option key={acc.id} value={acc.id}>
+                {acc.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
 
       {strategies.length > 0 && (
         <div>
