@@ -90,13 +90,21 @@ export default function TradeForm({
   function computeResult() {
     const entry = parseFloat(String(form.entry_price));
     const exit = parseFloat(String(form.exit_price));
-    const size = parseFloat(String(form.position_size));
-    if (isNaN(entry) || isNaN(exit) || isNaN(size)) return { amount: null, pct: null };
+    const sl = parseFloat(String(form.stop_loss));
 
-    const diff = form.direction === "long" ? exit - entry : entry - exit;
-    const amount = diff * size;
-    const pct = (diff / entry) * 100;
-    return { amount, pct };
+    if (isNaN(entry) || isNaN(exit)) return { amount: null, pct: null };
+
+    const rawDiff = form.direction === "long" ? exit - entry : entry - exit;
+
+    let rrRealized: number | null = null;
+    if (!isNaN(sl) && sl !== entry) {
+      const risk = Math.abs(entry - sl);
+      rrRealized = rawDiff / risk;
+    }
+
+    const pct = (rawDiff / entry) * 100;
+
+    return { amount: rrRealized, pct };
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -198,9 +206,8 @@ export default function TradeForm({
           />
         </div>
         <div>
-          <label className={labelClass}>Taille de position *</label>
+          <label className={labelClass}>Taille de position</label>
           <input
-            required
             type="number"
             step="any"
             value={form.position_size}
@@ -212,7 +219,7 @@ export default function TradeForm({
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className={labelClass}>Stop-loss</label>
+          <label className={labelClass}>Stop-loss (nécessaire pour calculer le R)</label>
           <input
             type="number"
             step="any"
