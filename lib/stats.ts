@@ -11,10 +11,12 @@ export function calcWinRate(trades: Trade[]): number {
   return (wins / closed.length) * 100;
 }
 
-export function calcTotalPnL(trades: Trade[]): number {
+// Somme des R gagnés/perdus sur l'ensemble des trades clôturés
+export function calcTotalR(trades: Trade[]): number {
   return getClosedTrades(trades).reduce((sum, t) => sum + (t.result_amount ?? 0), 0);
 }
 
+// RR moyen théorique (basé sur stop-loss / take-profit visés, avant le trade)
 export function calcAverageRR(trades: Trade[]): number {
   const closed = getClosedTrades(trades).filter((t) => t.stop_loss && t.take_profit);
   if (closed.length === 0) return 0;
@@ -28,6 +30,7 @@ export function calcAverageRR(trades: Trade[]): number {
   return ratios.reduce((a, b) => a + b, 0) / ratios.length;
 }
 
+// Drawdown maximum, exprimé en R cumulés
 export function calcMaxDrawdown(trades: Trade[]): number {
   const closed = getClosedTrades(trades).sort(
     (a, b) => new Date(a.entry_time).getTime() - new Date(b.entry_time).getTime()
@@ -47,17 +50,18 @@ export function calcMaxDrawdown(trades: Trade[]): number {
   return maxDrawdown;
 }
 
+// Courbe d'évolution en R cumulés (plus en devise)
 export function buildEquityCurve(trades: Trade[], startingCapital: number) {
   const closed = getClosedTrades(trades).sort(
     (a, b) => new Date(a.entry_time).getTime() - new Date(b.entry_time).getTime()
   );
 
-  let equity = startingCapital;
+  let cumulativeR = 0;
   return closed.map((t) => {
-    equity += t.result_amount ?? 0;
+    cumulativeR += t.result_amount ?? 0;
     return {
       date: t.exit_time ?? t.entry_time,
-      equity: Math.round(equity * 100) / 100,
+      equity: Math.round(cumulativeR * 100) / 100,
     };
   });
 }
@@ -75,7 +79,8 @@ export function calcCurrentLossStreak(trades: Trade[]): number {
   return streak;
 }
 
-export function calcTodayPnL(trades: Trade[]): number {
+// Somme des R gagnés/perdus sur les trades clôturés aujourd'hui
+export function calcTodayR(trades: Trade[]): number {
   const today = new Date().toDateString();
   return getClosedTrades(trades)
     .filter((t) => t.exit_time && new Date(t.exit_time).toDateString() === today)
