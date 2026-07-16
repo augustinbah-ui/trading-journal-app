@@ -52,7 +52,7 @@ export default async function JournalPage() {
                 <th className="px-4 py-3 font-normal">Sens</th>
                 <th className="px-4 py-3 font-normal">Date</th>
                 <th className="px-4 py-3 font-normal">Statut</th>
-                <th className="px-4 py-3 text-right font-normal">Résultat</th>
+                <th className="px-4 py-3 text-right font-normal">Résultat (R)</th>
               </tr>
             </thead>
             <tbody>
@@ -101,7 +101,7 @@ export default async function JournalPage() {
                     )}
                   >
                     {trade.result_amount !== null
-                      ? `${trade.result_amount >= 0 ? "+" : ""}${trade.result_amount.toFixed(2)}`
+                      ? `${trade.result_amount >= 0 ? "+" : ""}${trade.result_amount.toFixed(2)}R`
                       : "—"}
                   </td>
                 </tr>
