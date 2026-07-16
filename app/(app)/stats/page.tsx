@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { Trade, Profile } from "@/types/database";
+import { Trade, Profile, TradingAccount } from "@/types/database";
 import {
   calcWinRate,
   calcTotalR,
@@ -11,21 +11,32 @@ import {
 import StatCard from "@/components/StatCard";
 import EquityChart from "@/components/EquityChart";
 import PerformanceBySymbol from "@/components/PerformanceBySymbol";
+import AccountSelector from "@/components/AccountSelector";
 import { Percent, TrendingUp, TrendingDown, Scale } from "lucide-react";
 
-export default async function StatsPage() {
+export default async function StatsPage({
+  searchParams,
+}: {
+  searchParams: { account?: string };
+}) {
   const supabase = createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const [{ data: profile }, { data: trades }] = await Promise.all([
+  const selectedAccount = searchParams.account ?? "";
+
+  const [{ data: profile }, { data: allTrades }, { data: accounts }] = await Promise.all([
     supabase.from("profiles").select("*").eq("id", user!.id).single(),
     supabase.from("trades").select("*").eq("user_id", user!.id).order("entry_time"),
+    supabase.from("trading_accounts").select("*").eq("user_id", user!.id),
   ]);
 
   const p = profile as Profile | null;
-  const t = (trades as Trade[]) ?? [];
+  const accountsList = (accounts as TradingAccount[]) ?? [];
+  const t = ((allTrades as Trade[]) ?? []).filter(
+    (trade) => !selectedAccount || trade.account_id === selectedAccount
+  );
   const closed = getClosedTrades(t);
 
   const winRate = calcWinRate(t);
@@ -40,6 +51,8 @@ export default async function StatsPage() {
   return (
     <div className="mx-auto max-w-5xl px-4 py-6 md:px-8 md:py-8">
       <h1 className="mb-6 text-xl font-semibold">Statistiques</h1>
+
+      <AccountSelector accounts={accountsList} />
 
       {closed.length === 0 ? (
         <div className="rounded-xl border border-dashed border-border p-10 text-center text-sm text-textSecondary">
